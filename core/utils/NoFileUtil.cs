@@ -20,20 +20,35 @@ namespace McHMR_Updater_v2.core.utils
 
             foreach (string entry in whitelistArrayAfter)
             {
-                string tempPhat = entry;
-                if (tempPhat[0] == '/' || tempPhat[0] == '\\')
+                string tempPath = entry;
+                if (tempPath.Length > 0 && (tempPath[0] == '/' || tempPath[0] == '\\'))
                 {
-                    tempPhat = entry.Substring(1);
+                    tempPath = entry.Substring(1);
                 }
-                tempPhat = tempPhat.Replace('/', '\\');
-                string filePath = fileDir + "\\" + tempPhat;
-                if (Directory.Exists(filePath))
+                tempPath = tempPath.Replace('/', '\\');
+                string filePath = Path.Combine(fileDir, tempPath);
+
+                string directoryPath = Path.GetDirectoryName(filePath);
+                string pattern = Path.GetFileName(filePath);
+
+                if (string.IsNullOrEmpty(directoryPath))
                 {
-                    AddDirectoryFilesToSet(filePath, tempWhiteListSet);
+                    directoryPath = fileDir;
                 }
-                else
+
+                // 获取匹配模式的文件
+                if (Directory.Exists(directoryPath))
                 {
-                    tempWhiteListSet.Add(filePath);
+                    foreach (var file in Directory.GetFiles(directoryPath, pattern))
+                    {
+                        tempWhiteListSet.Add(file);
+                    }
+
+                    // 如果匹配模式也是目录，还需要继续递归处理该目录下的所有文件
+                    foreach (var dir in Directory.GetDirectories(directoryPath, pattern))
+                    {
+                        AddDirectoryFilesToSet(dir, tempWhiteListSet);
+                    }
                 }
             }
 
